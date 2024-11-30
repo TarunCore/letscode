@@ -1,0 +1,9 @@
+CREATE TABLE "test_cases" (
+  "id" SERIAL PRIMARY KEY,
+  "question_id" INT NOT NULL,
+  "input" TEXT NOT NULL,
+  "expected_output" TEXT NOT NULL,
+  "is_sample" BOOLEAN NOT NULL DEFAULT TRUE,
+  "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

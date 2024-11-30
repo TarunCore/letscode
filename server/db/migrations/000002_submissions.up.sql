@@ -1,0 +1,10 @@
+CREATE TABLE "submissions" (
+  "id" BIGSERIAL PRIMARY KEY,
+  "user_id" BIGINT NOT NULL,
+  "question_id" INT NOT NULL,
+  "code" TEXT NOT NULL,
+  "language" VARCHAR(15) NOT NULL,
+  "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY ("user_id") REFERENCES "users" ("id")
+);
