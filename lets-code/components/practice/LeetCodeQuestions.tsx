@@ -17,7 +17,7 @@ export default function LeetCodeQuestion({
   }[difficulty]
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
+    <div className="mx-auto p-4 w-[50%] overflow-y-scroll">
       <Card className="dark:bg-gray-800">
         <CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">

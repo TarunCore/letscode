@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/resizable"
 import QuestionDescription from '@/components/practice/QuestionDescription'
 import Editor from '@monaco-editor/react';
+import { Button } from '@/components/ui/button';
 const PracticeWithQuestionId = () => {
 
     const editorRef = useRef(null);
@@ -20,26 +21,20 @@ const PracticeWithQuestionId = () => {
     }
     return (
         // INFINITE SCROLL HAPPENS FOR removing 100vh
-        <div>
-            <ResizablePanelGroup direction="horizontal">
-                <ResizablePanel>
-                    <QuestionDescription id={1} />
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel>
-                    <div>
-                        <button onClick={showValue}>Show value</button>
-                        <Editor
-                            height="100vh"
-                            defaultLanguage="javascript"
-                            defaultValue="// some comment"
-                            onMount={handleEditorDidMount}
-                            theme='vs-dark'
-                        />
-                    </div>
-                </ResizablePanel>
-            </ResizablePanelGroup>
+        <div className='flex pb-4' style={{ height: `calc(100vh - 62px)` }}>
+            <QuestionDescription id={1} />
 
+            <div className='w-[50%]'>
+                <Editor
+                    height="80%"
+                    defaultLanguage="javascript"
+                    defaultValue="// some comment"
+                    onMount={handleEditorDidMount}
+                    theme='vs-dark'
+                />
+                
+                <button className="p-2 bg-green-500 text-white" onClick={showValue}>Submit</button>
+            </div>
         </div>
     )
 }

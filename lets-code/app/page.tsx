@@ -1,5 +1,5 @@
 import { ModeToggle } from "@/components/mode-toggle";
-import PracticeProblems from "@/components/practice/PracticeProblems";
+import PracticeProblems from "@/components/practice/PracticeProblemsListPage";
 import Image from "next/image";
 
 export default function Home() {
