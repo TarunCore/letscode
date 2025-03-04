@@ -1,46 +1,52 @@
-import { useEffect, useRef } from "react";
-import { Terminal } from "@xterm/xterm";
+import React, { useEffect, useRef } from 'react';
+import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
-import "@xterm/xterm/css/xterm.css";
-const fitAddon = new FitAddon();
+import io from 'socket.io-client';
+import '@xterm/xterm/css/xterm.css';
 
-const OPTIONS_TERM = {
-  useStyle: true,
-  screenKeys: true,
-  cursorBlink: true,
-  cols: 200,
-  theme: {
-      background: "black"
-  }
-};
-
-const TerminalComponent = () => {
-  const termRef = useRef<HTMLDivElement | null>(null);
-  const socketRef = useRef<WebSocket | null>(null);
+const TerminalComponent: React.FC = () => {
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<any>(null);
+  const terminalInstanceRef = useRef<Terminal | null>(null);
 
   useEffect(() => {
-    if (!termRef || !termRef.current) return;
-
-    // Open terminal in the div
-    const terminal = new Terminal(OPTIONS_TERM)
-    terminal.open(termRef.current);
-    terminal.write('Hello from \x1B[1;3;31mxterm.js\x1B[0m $ ');
+    // Create terminal
+    const terminal = new Terminal({
+      convertEol: true,
+      cursorBlink: true,
+    });
+    const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
-    fitAddon.fit();
-    // console.log(termRef.current)
-    // // Handle user input
-    terminal.onData((data) => {
-      console.log(data);
-        terminal.write(data);
+
+    // Connect to socket
+    const socket = io('http://localhost:3000');
+    socketRef.current = socket;
+    terminalInstanceRef.current = terminal;
+
+    // Render terminal
+    if (terminalRef.current) {
+      terminal.open(terminalRef.current);
+      fitAddon.fit();
+    }
+
+    // Handle incoming terminal output
+    socket.on('terminal_output', (data: string) => {
+      terminal.write(data);
     });
 
-    // // Cleanup
+    // Handle user input
+    terminal.onData((data: any) => {
+      socket.emit('terminal_input', data);
+    });
+
+    // Cleanup
     return () => {
       terminal.dispose();
+      socket.disconnect();
     };
-  }, [termRef]);
+  }, []);
 
-  return <div ref={termRef} />;
+  return <div ref={terminalRef} style={{ height: '100%', width: '100%' }} />;
 };
 
 export default TerminalComponent;

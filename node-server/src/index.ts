@@ -2,16 +2,14 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import Docker from 'dockerode';
-// import {pipleline}
+
 const app = express();
-
 const server = http.createServer(app);
-
 const io = new Server(server, {
     cors: { origin: "*" },
 });
-// https://stackoverflow.com/questions/32542530/nodejs-pty-timing-commands
-const docker = new Docker();
+
+const docker = new Docker({ socketPath: "/home/tarun/.docker/desktop/docker.sock" });
 
 async function createContainer() {
     const container = await docker.createContainer({
@@ -35,6 +33,7 @@ io.on("connection", async (socket) => {
     const container = await createContainer();
     console.log(`Started container: ${container.id}`);
 
+    // Create an exec instance that will persist
     const exec = await container.exec({
         Cmd: ["/bin/bash"],
         AttachStdin: true,
@@ -43,32 +42,59 @@ io.on("connection", async (socket) => {
         Tty: true,
     });
 
-    const stream = await exec.start({ hijack: true, stdin: true });
-
-    // Forward container output to the client
-    stream.on("data", (chunk) => {
-        console.log(chunk.toString());
-        socket.emit("terminal_output", chunk.toString());
+    // Start the exec instance
+    const stream = await exec.start({ 
+        hijack: true, 
+        stdin: true 
     });
 
-    // Receive user input and send it to the container
-    socket.on("terminal_input", (input) => {
-        stream.write(input);
+    // Properly handle stream reading
+    stream.on('data', (chunk) => {
+        const output = chunk.toString('utf8');
+        // console.log('Container output:', output);
+        socket.emit('terminal_output', output);
     });
 
-    socket.on("disconnect", async () => {
+    // Handle errors
+    stream.on('error', (err) => {
+        console.error('Stream error:', err);
+        socket.emit('terminal_error', err.toString());
+    });
+
+    // Receive and execute terminal input
+    socket.on('terminal_input', async (input) => {
+        try {
+            // Ensure input ends with a newline to execute the command
+            const commandWithNewline = input.endsWith('\n') ? input : input + '\n';
+            
+            // Write the input to the stream
+            stream.write(commandWithNewline, 'utf8', (err) => {
+                if (err) {
+                    console.error('Error writing to stream:', err);
+                    socket.emit('terminal_error', err.toString());
+                }
+            });
+        } catch (error: any) {
+            console.error('Error processing terminal input:', error);
+            socket.emit('terminal_error', error.toString());
+        }
+    });
+
+    socket.on('disconnect', async () => {
         console.log(`User disconnected: ${socket.id}`);
-        await container.stop();
-        await container.remove();
+        try {
+            await container.stop();
+            await container.remove();
+        } catch (error) {
+            console.error('Error stopping/removing container:', error);
+        }
     });
 });
-
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-// Use server.listen instead of app.listen
 server.listen(3000, () => {
     console.log('Server is running on http://localhost:3000');
 });
