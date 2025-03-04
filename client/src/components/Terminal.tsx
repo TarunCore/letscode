@@ -3,12 +3,12 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import io from 'socket.io-client';
 import '@xterm/xterm/css/xterm.css';
-
+let s = "";
 const TerminalComponent: React.FC = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<any>(null);
   const terminalInstanceRef = useRef<Terminal | null>(null);
-
+  const [command, setCommand] = React.useState('');
   useEffect(() => {
     // Create terminal
     const terminal = new Terminal({
@@ -36,7 +36,25 @@ const TerminalComponent: React.FC = () => {
 
     // Handle user input
     terminal.onData((data: any) => {
-      socket.emit('terminal_input', data);
+      // TODO: handle ctrc+c
+      if (data === '\r') {
+        console.log("sending command: ", s);
+        socket.emit('terminal_input', s+"\n");
+        setCommand('');
+        s="";
+      }else if (data === '\x7F') {  // Backspace
+        if (s.length > 0) {
+          s = s.slice(0, -1);
+          terminal.write('\b \b');
+        }
+      }
+      else{
+        console.log("data: ", data, "command: ", command, "s", s);
+        s = s + data;
+        setCommand(prev => prev + data);
+        terminal.write(data);
+      }
+      
     });
 
     // Cleanup
@@ -46,7 +64,7 @@ const TerminalComponent: React.FC = () => {
     };
   }, []);
 
-  return <div ref={terminalRef} style={{ height: '100%', width: '100%' }} />;
+  return <div ref={terminalRef} style={{ height: '90vh', width: '100%' }} />;
 };
 
 export default TerminalComponent;
