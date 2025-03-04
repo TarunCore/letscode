@@ -15,6 +15,7 @@ type CreateUserReq struct {
 	Password string `json:"password"`
 }
 
+// https://www.youtube.com/watch?v=rcH813f5vCE
 type CreateUserRes struct {
 	ID       int64  `json:"id"`
 	Username string `json:"username"`
